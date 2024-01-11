@@ -1,0 +1,84 @@
+version: '3.7'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: mern-stack-blog-server
+    hostname: mern-stack-blog-node-server
+    container_name: mern-stack-blog-node-server
+    command: npm start
+    volumes:
+      - ./server/:/usr/src/app
+      - node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    env_file: ./server/.env
+    environment:
+      - APP_PORT=3000
+      - NODE_ENV=development
+      - MONGO_DB_HOST=mongodb://mongodb
+      - MONGO_DB_PORT=27017
+      - MONGO_DB_DATABASE=mern-stack
+      - CLIENT_URI=http://example.domain
+      - CLIENT_PORT=8001
+    networks:
+      - mern-stack-blog-network
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: mern-stack-blog-client
+    hostname: mern-stack-blog-node-react-client
+    container_name: mern-stack-blog-react-client
+    command: npm start
+    volumes:
+      - ./client/:/usr/src/app
+      - node_modules
+    depends_on:
+      - server
+    env_file: ./client/.env
+    environment:
+      - PORT=8001
+      - REACT_APP_API_URL=http://example.domain:3000/api
+    ports:
+      - "8001:8001"
+    networks:
+      - mern-stack-blog-network
+  mongodb:
+    image: mongo
+    hostname: mern-stack-blog-db
+    container_name: mern-stack-blog-db
+    volumes:
+      - data-volume:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=mern-stack
+    ports:
+      - "27017:27017"
+    networks:
+      - mern-stack-blog-network
+  mongoexpress:
+    image: mongo-express
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    links:
+      - mongodb
+    environment: 
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
+    networks:
+      - mern-stack-blog-network
+
+networks:
+    mern-stack-blog-network:
+        driver: bridge
+
+volumes:
+    data-volume:
+    node_modules:
+    web-root:
+      driver: local
